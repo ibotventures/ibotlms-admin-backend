@@ -112,6 +112,7 @@ WSGI_APPLICATION = 'iBot_lms.wsgi.application'
 CORS_ALLOWED_ORIGINS = [
    "http://147.93.27.47:4200",
    "http://147.93.27.47:3000",
+   "http://147.93.27.47",
 ]
 
 CORS_ALLOWED_METHODS = [
