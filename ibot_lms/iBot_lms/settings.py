@@ -113,6 +113,7 @@ CORS_ALLOWED_ORIGINS = [
    "http://147.93.27.47:4200",
    "http://147.93.27.47:3000",
    "http://147.93.27.47",
+   "http://mibot.in",
 ]
 
 CORS_ALLOWED_METHODS = [
