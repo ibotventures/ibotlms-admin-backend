@@ -2,7 +2,11 @@ from django.urls import path
 from .views import (CourseListCreateAPIView, CourseDetailAPIView, SignUpAPIView, SignInAPIView, ModuleAPIView, 
                     ModuleDetailAPIView, OfflinePurchaseList, OfflinePurchaseDetail, ModuleFileAPIView,
                     AssessmentCreateAPIView, AssessmentDetailAPIView, CategoryAPIView, ProductAPIView, CourseUserVisibilityAPIView,
-                    CertificationAPIView, CertificationQuestionAPIView)
+                    CertificationAPIView, CertificationQuestionAPIView, SignInAPIView, Signup, SendOTP, Forget, UpdatePassword, getdetails, updatedetails,
+                    UploadCourse, UploadModule, AssessmentQuestion, delaccount, DeleteModuleView, deleteQuestion, deleteCourse, courseconfirm, addproduct,
+                    OfflinePurchaseUserAPIView, deletecertifyques, StatisticsAPIView, canaccesscourse, tasktrack, canviewmodule, pickup, FetchCoursePreview,
+                    courselist, checkanswers, checkcertifyanswer, CourseListView, ProductView, ProductReviews, Eachproduct, Userscheck, UserReviews, 
+                    UserCourses, categories, OrderAPIView, CheckoutAPIView, CertificationUpdateAPIView)
 
 urlpatterns = [
     path('courses/', CourseListCreateAPIView.as_view(), name='course-list-create'),
@@ -30,4 +34,51 @@ urlpatterns = [
     path('certification/<uuid:id>/', CertificationAPIView.as_view()),
     path('certification-question/', CertificationQuestionAPIView.as_view()),                # POST, GET by certification_id
     path('certification-question/<uuid:id>/', CertificationQuestionAPIView.as_view()),
+    
+    
+    path('signin/', SignInAPIView.as_view(), name='signin'),
+    path('signup/',Signup.as_view(),name='signup'),
+    path('sendotp/',SendOTP.as_view(),name='sendotp'),
+    path('forget/',Forget.as_view(),name='forget'),
+    path('updatepassword/',UpdatePassword.as_view(),name='updatepassword'),
+    path('getdetail/',getdetails.as_view(),name='getdetail'),
+    path('updatedetails/',updatedetails.as_view(),name='updatedetils'),
+
+    path('uploadcourse/',UploadCourse.as_view(),name='uploadcourse'),
+    path('uploadmodule/',UploadModule.as_view(),name='uploadmodule'),
+    path('assessmentquestion/',AssessmentQuestion.as_view(),name='assessmentquestion'),
+    path('deleteaccount/',delaccount.as_view(),name='deleteaccount'),
+    path('deletemodule/<uuid:id>/', DeleteModuleView.as_view(), name='deletemodule'),
+    path('deleteques/<uuid:id>/',deleteQuestion.as_view(),name='deleteques'),
+    path('deletecourse/<uuid:id>/',deleteCourse.as_view(),name='deletecourse'),
+    path('confirm/',courseconfirm.as_view(),name='confirm'),
+    path('addproduct/',addproduct.as_view(),name='addproduct'),
+    path('categories/', CategoryAPIView.as_view()),  # For GET and POST
+    path('offlinepurchase/', OfflinePurchaseUserAPIView.as_view(), name='offlinepurchase'),
+    path('deletecertifyques/<uuid:id>/<uuid:courseid>/',deletecertifyques.as_view(),name='deletecertifyques'),
+    path('statistics/', StatisticsAPIView.as_view(), name='statistics'),
+
+    path('canaccesscourse/',canaccesscourse.as_view(),name='canaccesscourse'),
+    path('tasktracking/',tasktrack.as_view(),name='tasktrack'),
+    path('canviewmodule/',canviewmodule.as_view(),name='canviewmodule'),
+    path('pickup/',pickup.as_view(),name='pickup'),
+    path('coursepreview/',FetchCoursePreview.as_view(),name='course-preview'),
+    path('courselist/',courselist.as_view(),name='courselist'),
+    path('submitanswers/',checkanswers.as_view(),name='submitanswers'),
+    path('submitcertificationanswers/',checkcertifyanswer.as_view(),name='submitcertificationanswer'),
+    path('courses/', CourseListView.as_view(), name='course-list'),
+    path('productfilter/',ProductView.as_view(),name='productfilter'),
+    path('productreviews/',ProductReviews.as_view(),name='productreviews'),
+    path('eachproduct/', Eachproduct.as_view(),name='eachproduct'),
+    path('isallowed/',Userscheck.as_view(),name='isallowed'),
+    path('reviews/',UserReviews.as_view(),name='reviews'),
+    path('userstartedcourses/',UserCourses.as_view(),name='usercourses'),
+    path('listcategory/',categories.as_view(),name='listcategory'),
+    
+    path('order/', OrderAPIView.as_view(), name='order'),    
+    path('orderStatus/', CheckoutAPIView.as_view(), name='checkout'),
+   
+    path('certifications/', CertificationAPIView.as_view(), name='certifications'),
+    path('certificationsupdate/<uuid:pk>/', CertificationUpdateAPIView.as_view(), name='certification-detail'),  
+    
 ]

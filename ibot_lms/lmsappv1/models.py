@@ -14,7 +14,7 @@ class User(models.Model):
     username = models.CharField(max_length=100, unique=True, null=True, blank=True)
     password = models.CharField(max_length=100)
     age = models.CharField(max_length=3, null=True, blank=True)
-    profile = models.TextField(max_length=255, null=True, blank=True)
+    profile = models.ImageField(upload_to='images/profile/',null=True, blank=True)
     role = models.CharField(max_length=50, choices=Role, default='visitor')
     subscription = models.BooleanField(default=False)
     first_name = models.CharField(max_length=100, null=True, blank=True)
@@ -46,6 +46,7 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
     price = models.DecimalField(max_digits=10, decimal_places=2)
     make = models.CharField(max_length=255, help_text="Manufacturer or brand of the product")
+    rating = models.IntegerField(default=0)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -58,6 +59,7 @@ class Course(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='courses')
     course_cover_image = models.ImageField(upload_to='course/', null=True, blank=True)
     video = models.TextField(null=True, blank=True)
+    rating = models.IntegerField(default=0)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -130,3 +132,99 @@ class OfflinePurchase(models.Model):
     status = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
+
+class OTP(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email = models.EmailField(max_length=100, unique=True,null=True, blank=True)
+    username = models.CharField(max_length=100, unique=True,null=True, blank=True)
+    mobile = models.CharField(max_length=15,null=True, blank=True)
+    password = models.CharField(max_length=100,null=True, blank=True)
+    otp = models.TextField(max_length=4)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+    
+class Transaction(models.Model):
+    STATUS_CHOICES = [
+        ('SUCCESS', 'Success'),
+        ('FAILED', 'Failed'),
+        ('PENDING', 'Pending'),
+    ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transactions')    
+    # Razorpay fields
+    razorpay_payment_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    razorpay_order_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    razorpay_signature = models.CharField(max_length=255, null=True, blank=True)
+    
+    # Transaction details
+    amount = models.IntegerField(null=True, blank=True)  # Store in appropriate currency format
+    currency = models.CharField(max_length=10, default='INR')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    receipt = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+class UserCourseProgress(models.Model):
+    task_type = (
+        ('overview', 'overview'),
+        ('main', 'main'),
+        ('activity', 'activity'),
+        ('assessment', 'assessment'),
+        ('certifyques','certifyques')
+    )
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='course_progress')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    last_module = models.ForeignKey(Module, on_delete=models.SET_NULL, null=True, blank=True)
+    content = models.IntegerField(default=0)
+    activity = models.IntegerField(default=0)
+    task = models.CharField(max_length=100, choices=task_type)
+    is_completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+
+class UserAssessmentScore(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assessment_scores')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE,null=True, blank=True)
+    module = models.ForeignKey(Module, on_delete=models.CASCADE)
+    total_marks = models.IntegerField(default=0)
+    obtained_marks = models.IntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+
+class UserCertificationScore(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='certification_score')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, null=True, blank=True)
+    certify = models.ForeignKey(Certification, on_delete=models.CASCADE)
+    total_marks = models.IntegerField(default=0)
+    obtained_marks = models.IntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+
+class UserReview(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='course_rating')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    rating = models.IntegerField(default=1)
+    review = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+
+class ProductReview(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='product_rating')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    rating = models.IntegerField(default=1)
+    review = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+
+class Deleteaccount(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    reason = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
