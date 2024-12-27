@@ -745,7 +745,7 @@ class Signup(APIView):
             print(f"Error: {str(e)}") 
             return Response({'error': 'Something went wrong', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-class SignInAPIView(APIView):
+class SignIn(APIView):
     def post(self, request):
         try:
             data = request.data

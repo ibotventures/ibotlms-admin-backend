@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (CourseListCreateAPIView, CourseDetailAPIView, SignUpAPIView, SignInAPIView, ModuleAPIView, 
                     ModuleDetailAPIView, OfflinePurchaseList, OfflinePurchaseDetail, ModuleFileAPIView,
                     AssessmentCreateAPIView, AssessmentDetailAPIView, CategoryAPIView, ProductAPIView, CourseUserVisibilityAPIView,
-                    CertificationAPIView, CertificationQuestionAPIView, SignInAPIView, Signup, SendOTP, Forget, UpdatePassword, getdetails, updatedetails,
+                    CertificationAPIView, CertificationQuestionAPIView, SignIn, Signup, SendOTP, Forget, UpdatePassword, getdetails, updatedetails,
                     UploadCourse, UploadModule, AssessmentQuestion, delaccount, DeleteModuleView, deleteQuestion, deleteCourse, courseconfirm, addproduct,
                     OfflinePurchaseUserAPIView, deletecertifyques, StatisticsAPIView, canaccesscourse, tasktrack, canviewmodule, pickup, FetchCoursePreview,
                     courselist, checkanswers, checkcertifyanswer, CourseListView, ProductView, ProductReviews, Eachproduct, Userscheck, UserReviews, 
@@ -36,7 +36,7 @@ urlpatterns = [
     path('certification-question/<uuid:id>/', CertificationQuestionAPIView.as_view()),
     
     
-    path('signin/', SignInAPIView.as_view(), name='signin'),
+    path('signin/', SignIn.as_view(), name='signin'),
     path('signup/',Signup.as_view(),name='signup'),
     path('sendotp/',SendOTP.as_view(),name='sendotp'),
     path('forget/',Forget.as_view(),name='forget'),
