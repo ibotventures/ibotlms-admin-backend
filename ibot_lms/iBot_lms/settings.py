@@ -116,6 +116,7 @@ CORS_ALLOWED_ORIGINS = [
    "http://mibot.in",
    "http://localhost:3000",
    "http://localhost:4200",
+   "https://mibot.in",
 ]
 
 CORS_ALLOWED_METHODS = [
