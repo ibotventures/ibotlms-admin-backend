@@ -14,15 +14,12 @@ from pathlib import Path
 import os
 from decouple import config
 from dotenv import load_dotenv
-import cloudinary_storage
 load_dotenv()
 
 EMAIL_HOST_PASSWORD=os.getenv('EMAIL_HOST_PASSWORD')
 EMAIL_HOST_USER=os.getenv('EMAIL_HOST_USER')
 DJANGO_SECRET=os.getenv('DJANGO_SECRET')
-CLOUD_NAME=os.getenv('CLOUD_NAME')
-CLOUD_API_KEY=os.getenv('CLOUD_API_KEY')
-CLOUD_SECRET_KEY=os.getenv('CLOUD_SECRET_KEY')
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -51,10 +48,6 @@ INSTALLED_APPS = [
     'ibot_lms.lmsappv1',
     'rest_framework',
     'corsheaders',
-    'django_celery_results',
-    'django_celery_beat',
-    'cloudinary_storage',
-    'cloudinary',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -189,56 +182,3 @@ EMAIL_PORT=587
 EMAIL_HOST_USER=EMAIL_HOST_USER
 EMAIL_HOST_PASSWORD=EMAIL_HOST_PASSWORD
 EMAIL_USE_TLS=True
-
-# Add Cloudinary credentials
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
-    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET')
-}
-
-# Set Cloudinary as the default file storage
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
-
-
-#CELERY SETTINGS
-
-CELERY_BROKER_URL = 'redis://redis:6379'
-CELERY_ACCEPT_CONTENT = ['application/json']
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'Asia/Kolkata'
-CELERY_RESULT_BACKEND = 'django-db'
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
-        },
-    },
-    'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': log_file,
-            'formatter': 'verbose',
-        },
-        'console': {  # Console handler can be disabled or configured
-            'level': 'WARNING',  # Set a higher level if you don't want INFO level logs
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
-        },
-    },
-    'loggers': {
-        'request_logger': {
-            'handlers': ['file'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-    },
-}
-

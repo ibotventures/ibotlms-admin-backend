@@ -45,7 +45,6 @@ from django.shortcuts import get_object_or_404
 from django.http import FileResponse, Http404
 from rest_framework import generics
 from .tasks import add
-from celery.result import AsyncResult
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
