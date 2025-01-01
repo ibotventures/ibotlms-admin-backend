@@ -24,7 +24,7 @@ DJANGO_SECRET=os.getenv('DJANGO_SECRET')
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 # BASE_DIR points to the root directory of your Django project
-log_file = os.path.join(BASE_DIR, "iBot_lms", "requests.log")
+log_file = os.path.join(BASE_DIR, "ibot_lms", "requests.log")
 
 # Ensure the directory exists
 log_dir = os.path.dirname(log_file)
@@ -82,7 +82,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'iBot_lms.urls'
+ROOT_URLCONF = 'ibot_lms.ibot_lms.urls'
 
 TEMPLATES = [
     {
@@ -100,7 +100,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'iBot_lms.wsgi.application'
+WSGI_APPLICATION = 'ibot_lms.ibot_lms.wsgi.application'
 
 CORS_ALLOWED_ORIGINS = [
    "http://147.93.27.47:4200",
