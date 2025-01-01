@@ -1,16 +1,8 @@
-"""
-WSGI config for iBot_lms project.
-
-It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/5.1/howto/deployment/wsgi/
-"""
-
 import os
+import sys
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'iBot_lms.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ibot_lms.ibot_lms.settings')
 
 application = get_wsgi_application()

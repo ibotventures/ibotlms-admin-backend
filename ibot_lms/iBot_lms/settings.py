@@ -48,7 +48,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
-    'lmsappv1',
+    'ibot_lms.lmsappv1',
     'rest_framework',
     'corsheaders',
     'django_celery_results',
