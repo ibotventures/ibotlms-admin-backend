@@ -44,7 +44,6 @@ from django.core.files.storage import FileSystemStorage
 from django.shortcuts import get_object_or_404
 from django.http import FileResponse, Http404
 from rest_framework import generics
-from .tasks import add
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
