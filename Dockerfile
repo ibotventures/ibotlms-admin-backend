@@ -19,7 +19,5 @@ COPY . .
 # Expose port 8000 for Django
 EXPOSE 8000
 
-ENV DJANGO_SETTINGS_MODULE=ibot_lms.ibot_lms.settings
-
 # Run the Django development server
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "ibot_lms.ibot_lms.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "ibot_lms.wsgi:application"]
