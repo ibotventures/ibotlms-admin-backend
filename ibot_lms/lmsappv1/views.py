@@ -46,6 +46,8 @@ from django.http import FileResponse, Http404
 from rest_framework import generics
 from django.utils import timezone
 
+
+
 logger = logging.getLogger(__name__)
 UPLOAD_DIR = '/media/'
 client = razorpay.Client(auth=("rzp_test_88QnZEgha1Ucxs", "yMHU4vBu66sKyux6DJ7OfKu8"))
