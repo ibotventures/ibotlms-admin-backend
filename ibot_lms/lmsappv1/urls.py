@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (CourseListCreateAPIView, CourseDetailAPIView, SignUpAPIView, SignInAPIView, ModuleAPIView, 
                     ModuleDetailAPIView, OfflinePurchaseList, OfflinePurchaseDetail, ModuleFileAPIView,
                     AssessmentCreateAPIView, AssessmentDetailAPIView, CategoryAPIView, ProductAPIView, CourseUserVisibilityAPIView,
-                    CertificationAPIView, CertificationQuestionAPIView, SignIn, Signup, SendOTP, Forget, UpdatePassword, getdetails, updatedetails,
+                    CertificationAPIView, CertificationQuestionAPIView, SignIn, Signup, SendOTP, Forget, UpdatePassword, getdetails, updatedetails, buyerct, transact, cartproduct, carttransact, delcart, getprodetail, activates, delcoursereview, delproductreview, SubscriptionAmount,
                     UploadCourse, UploadModule, AssessmentQuestion, delaccount, DeleteModuleView, deleteQuestion, deleteCourse, courseconfirm, addproduct,
                     OfflinePurchaseUserAPIView, deletecertifyques, StatisticsAPIView, canaccesscourse, tasktrack, canviewmodule, pickup, FetchCoursePreview,
                     courselist, checkanswers, checkcertifyanswer, CourseListView, ProductView, ProductReviews, Eachproduct, Userscheck, UserReviews, 
@@ -80,5 +80,16 @@ urlpatterns = [
    
     path('certifications/', CertificationAPIView.as_view(), name='certifications'),
     path('certificationsupdate/<uuid:pk>/', CertificationUpdateAPIView.as_view(), name='certification-detail'),  
+    
+    path('buyercount/', buyerct.as_view(),name='buyercount'),
+    path('transact/', transact.as_view(), name='transact'),
+    path('productcart/', cartproduct.as_view(), name='productcart'),
+    path('usercart/',carttransact.as_view(),name='usercart'),
+    path('delcart/<uuid:id>/',delcart.as_view(),name='delcart'),
+    path('getprodetail/',getprodetail.as_view(),name='getprodetail'),
+    path('activateaccount/',activates.as_view(),name='activateaccount'),
+    path('delcoursereview/<uuid:id>/',delcoursereview.as_view(),name='delcoursereview'),
+    path('delproductreview/<uuid:id>/',delproductreview.as_view(),name='delproductreview'),
+    path('getsubscription/', SubscriptionAmount.as_view(), name='getsubscription'),
     
 ]

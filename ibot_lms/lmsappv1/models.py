@@ -228,3 +228,20 @@ class Deleteaccount(models.Model):
     reason = models.TextField()
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(default=timezone.now)
+    
+class SubscriptionMoney(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    amount = models.IntegerField()
+    receiptcount = models.IntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+
+class CartData(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product_cart')
+    transact = models.ForeignKey(Transaction, on_delete=models.CASCADE, related_name='product_transaction', null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='userid')
+    quantity = models.IntegerField(default=1)
+    amount = models.IntegerField()
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)

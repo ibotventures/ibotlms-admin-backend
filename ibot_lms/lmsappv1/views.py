@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Count, Sum, Avg
 from .filters import CourseFilter,ProductFilter
-from .models import User, OfflinePurchase, Module, Course, Assessment, Certification, CertificationQuestion, Category, Product, UserCourseProgress, UserAssessmentScore, UserCertificationScore, ProductReview, UserReview, Deleteaccount, OTP, Transaction, UserCourseProgress, ProductReview, UserReview
+from .models import CartData, SubscriptionMoney, User, OfflinePurchase, Module, Course, Assessment, Certification, CertificationQuestion, Category, Product, UserCourseProgress, UserAssessmentScore, UserCertificationScore, ProductReview, UserReview, Deleteaccount, OTP, Transaction, UserCourseProgress, ProductReview, UserReview
 from .serializers import (
     CourseFilterSerializer,
     CourseSerializer,
@@ -29,6 +29,8 @@ from .serializers import (
     UserReviewSerializer,
     delserialiser,
     Productreviewserialiser,
+    UserCourseProgressSerializer,
+    UserReviewSerializer
 )
 from .methods import generate_otp, purchasedUser_encode_token,visitor_encode_token,courseSubscribedUser_encode_token, admin_encode_token, encrypt_password
 from .authentication import PurchasedUserTokenAuthentication, CourseSubscribedUserTokenAuthentication, AdminTokenAuthentication, VisitorTokenAuthentication
@@ -117,22 +119,18 @@ class SignUpAPIView(APIView):
         print(data)
         email = data.get('email')
         mobile = data.get('mobile')
-        
         if OfflinePurchase.objects.filter(customer_email=email).exists() or OfflinePurchase.objects.filter(customer_contact_number=mobile).exists():
             data['subscription'] = True
         else:
             data['subscription'] = False
-
-        serializer = UserSerializer(data=data)
-        
+        serializer = SignUpSerializer(data=data)
         if serializer.is_valid():
             raw_password = serializer.validated_data.get('password')
             encrypted_password = encrypt_password(raw_password)
             serializer.save(password=encrypted_password)
-            logger.info(serializer.data)
             return Response({'data': serializer.data, 'message': "User created successfully"}, status=status.HTTP_201_CREATED)
         else:
-            logger.error(serializer.errors)
+            print(serializer.errors)
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, pk, *args, **kwargs):
@@ -625,91 +623,6 @@ class Userscheck(APIView):
         except Exception as e:
             print(f"Error: {str(e)}")
             return Response({'error': 'Something went wrong', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-class SignUpAPIView(APIView):
-    def post(self, request, *args, **kwargs):
-        data = request.data
-        print(data)
-        email = data.get('email')
-        mobile = data.get('mobile')
-        if OfflinePurchase.objects.filter(customer_email=email).exists() or OfflinePurchase.objects.filter(customer_contact_number=mobile).exists():
-            data['subscription'] = True
-        else:
-            data['subscription'] = False
-        serializer = SignUpSerializer(data=data)
-        if serializer.is_valid():
-            raw_password = serializer.validated_data.get('password')
-            encrypted_password = encrypt_password(raw_password)
-            serializer.save(password=encrypted_password)
-            return Response({'data': serializer.data, 'message': "User created successfully"}, status=status.HTTP_201_CREATED)
-        else:
-            print(serializer.errors)
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-    def put(self, request, pk, *args, **kwargs):
-        data = request.data
-        user = User.objects.get(pk=pk)
-        serializer = UserSerializer(user, data=data)
-        if serializer.is_valid():
-            raw_password = serializer.validated_data.get('password')
-            encrypted_password = encrypt_password(raw_password)
-            serializer.save(password=encrypted_password)
-            return Response({'data': serializer.data, 'message': "User updated successfully"})
-        else:
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-class SendOTP(APIView):
-    def post(self, request):
-        try:
-            mobile = request.data.get('mobile')
-            password = request.data.get('password')
-            email = request.data.get('email')
-            username = request.data.get('username')
-            type = request.data.get('type')
-            otp_record = OTP.objects.filter(email=email).first()
-            if type:
-                if User.objects.filter(email=email).exists():
-                    return Response({'data': 'email_found'}, status=status.HTTP_200_OK)
-                if User.objects.filter(username=username).exists():
-                    return Response({'data': 'username_found'}, status=status.HTTP_200_OK)
-            otp = generate_otp()
-            if otp_record:
-                    otp_record.otp = otp
-                    otp_record.save()
-                    data = { 'email': email, 'isfound': 'notfound'}
-            else:
-                    otp_data = {'email': email,'username':username,'password':password,'mobile':mobile, 'otp': otp}
-                    otp_save = OTPSerializer(data=otp_data)
-                    if otp_save.is_valid():
-                        otp_save.save()
-                        data = { 'email': email, 'isfound': 'notfound'}
-                    else:
-                        return Response(otp_save.errors, status=status.HTTP_400_BAD_REQUEST)
-            send_mail(
-                    'OTP - Email Verification',
-                    f'Your OTP is: {otp}',
-                    'ibotventures123@gmail.com',
-                    [email],
-                    fail_silently=False
-            )
-            return Response({'data': data, 'message': "OTP sent successfully"}, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            print(f"Error occurred: {str(e)}")
-            return Response({'error': 'Something went wrong', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    def get(self, request):
-        try:
-            email = request.query_params.get('email')
-            code = request.query_params.get('code')
-            otp = OTP.objects.filter(email=email).first()
-            if otp is None:
-                return Response({'error': 'OTP not found'}, status=status.HTTP_404_NOT_FOUND)
-            serializer = OTPSerializer(otp)
-            if serializer.data.get('otp') == code:
-                otp.delete()  
-                return Response({'data': 'matched'}, status=status.HTTP_201_CREATED)
-            else:
-                return Response({'data': 'unmatched'}, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            return Response({'error': 'Something went wrong', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
 class Signup(APIView):
     def post(self, request):
@@ -2081,7 +1994,6 @@ class categories(APIView):
             print("Exception:", str(e))
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
-
 class ProductReviews(APIView):
     def post(self, request):
         try:
@@ -2144,87 +2056,584 @@ class ProductReviews(APIView):
         except Exception as e:
             print("Exception:", str(e))  
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
-# class courselist(APIView):
-#     def get(self, request, *args, **kwargs):
-#         try:
-#             courselists = Course.objects.filter(status=True)
-#             serializer = CourseSerializer(courselists, many=True)
-#             print(serializer.data)
-#             for each in serializer.data:
-#                 product = Product.objects.get(id=each['product'])
-#                 category = Category.objects.get(id=product.category)
-#                 print(category.id.level)
-#             return Response({'data': serializer.data, 'message': 'confirmed successfully'}, status=status.HTTP_200_OK)
-#         except Exception as e:
-#             print(f"Error: {str(e)}")
-#             return Response({'error': 'Something went wrong', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
-# class courselist(APIView):
-#     def get(self, request, *args, **kwargs):
-#         try:
-#             courselists = Course.objects.filter(status=True)
-#             serializer = CourseSerializer(courselists, many=True)
-#             data = serializer.data
-#             print(serializer.data)
-#             for each in serializer.data:
-#                 product = Product.objects.get(id=each['product'])
-#                 category = Category.objects.get(id=product.category.id)  # Use .id to get the UUID
-#                 each['category'] = category.category_name
-#             print(data)
-#             return Response({'data': serializer.data, 'message': 'confirmed successfully'}, status=status.HTTP_200_OK)
-#         except Exception as e:
-#             print(f"Error: {str(e)}")
-#             return Response({'error': 'Something went wrong', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-# class courselist(APIView):
-#     def get(self, request, *args, **kwargs):
-#         try:
-#             courselists = Course.objects.filter(status=True)
-#             serializer = CourseSerializer(courselists, many=True)
-#             data = serializer.data  # Serialized data
-#             print(data)
-#             enriched_data = []  # New list to store enriched data
-#             for each in data:
-#                 product = Product.objects.get(id=each['product'])
-#                 category = Category.objects.get(id=product.category.id)  # Use .id to get the UUID
-#                 module = Module.objects.get(course=each['id'])
-#                 each['module_count']=len(module)
-#                 each['category'] = category.category_name
-#                 enriched_data.append(each)  # Append the modified data to the list
-#             print(enriched_data)
-#             return Response({'data': enriched_data, 'message': 'confirmed successfully'}, status=status.HTTP_200_OK)
-#         except Exception as e:
-#             print(f"Error: {str(e)}")
-#             return Response({'error': 'Something went wrong', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+class ProductReviews(APIView):
+    def post(self, request):
+        try:
+            data = request.data
+            
+            product = Product.objects.filter(id=data['product']).first()
+            if not product:
+                return Response({'error': 'Invalid product ID.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            serializer = Productreviewserialiser(data=data)
+            if serializer.is_valid():
+                review_data = serializer.save()
+                review_data_list = ProductReview.objects.filter(product=review_data.product)
+                reviews_list = []
+                rating_sum = 0
 
-# class UserReviews(APIView):
-#     def post(self, request):
-#         try:
-#             data = request.data
-#             serialiser = UserReviewSerializer(data=data)
-#             rating_sum = 0
-#             if serialiser.is_valid():
-#                 reviewdata = serialiser.save()
-#                 review_data = UserReview.objects.filter(course=reviewdata.course)
-#                 course = Course.objects.filter(id=reviewdata.course).first()
-#                 reviews_list = []
-#                 for user in review_data:
-#                     reviewer = User.objects.get(id=user.user.id)
-#                     reviews_list.append({
-#                         'username': reviewer.username,
-#                         'rating': user.rating,
-#                         'review': user.review,
-#                         'createdAt': user.created_at
-#                     })
-#                     rating_sum = rating_sum+user.rating
-#                 rating_avg = rating_sum/reviews_list.length
-#                 course.rating = rating_avg
-#                 course.save()
-#                 return Response({'data': reviews_list}, status=status.HTTP_200_OK)
-#             else:
-#                 print("Serializer errors:", serialiser.errors)  # Debugging
-#                 return Response({'error': serialiser.errors}, status=status.HTTP_400_BAD_REQUEST)
-#         except Exception as e:
-#             print("Exception:", str(e))  # Debugging
-#             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                for review in review_data_list:
+                    reviewer = User.objects.get(id=review.user.id)
+                    reviews_list.append({
+                        'id':review.id,
+                        'username': reviewer.username,
+                        'rating': review.rating,
+                        'review': review.review,
+                        'createdAt': review.created_at
+                    })
+                    rating_sum += review.rating
+                
+                rating_avg = rating_sum / len(reviews_list)
+                product.rating = rating_avg
+                product.save()
+                
+                return Response({'data': reviews_list}, status=status.HTTP_200_OK)
+            else:
+                print("Serializer errors:", serializer.errors)  
+                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
+        except Exception as e:
+            print("Exception:", str(e))  
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request):
+        try:
+            product_id = request.query_params.get('id')
+        
+            if not product_id:
+                return Response({'error': 'Product ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+            review_data = ProductReview.objects.filter(product=product_id)
+            reviews_list = []
+
+            for review in review_data:
+                reviews_list.append({
+                    'id':review.id,
+                    'username': review.user.username,  
+                    'rating': review.rating,
+                    'review': review.review,
+                    'createdAt': review.created_at
+                })
+
+            return Response({'data': reviews_list}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print("Exception:", str(e))  
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class delproductreview(APIView):
+    def delete(self, request, id):
+        try:
+            productreviewdel = ProductReview.objects.get(id=id) 
+            productreviewdel.delete()
+            return Response({"data": 'success','message': 'deleted successfully'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Error during deletion: {str(e)}")
+            return Response({'error': f'Something went wrong: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+class SubscriptionAmount(APIView):
+    def get(self,request):
+        try:
+            data = SubscriptionMoney.objects.all().first()
+            count = data.receiptcount
+            count = count + 1
+            data.receiptcount = count
+            data.save()
+            serialise = subscribeserialiser(data)
+            return Response({'data': serialise.data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print("Exception:", str(e))  
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+class transact(APIView):
+    def get(self, request):
+        try:
+            user = request.query_params.get('user_id')
+            if not user:
+                return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            data = Transaction.objects.filter(user_id=user)
+            serialise = transactiondetails(data, many=True)
+            print(serialise.data)
+            return Response({'data': serialise.data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print("Exception:", str(e))  
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class cartproduct(APIView):
+    def post(self, request):
+        try:
+            data = request.data
+
+            # Check if required fields are provided
+            proid = data.get('product')
+            user_id = data.get('user')
+            if not proid or not user_id:
+                return Response({'error': 'Product ID and User ID are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check if the product exists in the cart without a transaction
+            cart_data = CartData.objects.filter(product=proid, transact=None).first()
+            if cart_data:
+                product = Product.objects.filter(id=cart_data.product.id).first()
+                cart_data.quantity += 1
+                cart_data.amount = cart_data.quantity * product.price
+                cart_data.save()
+                return Response({'data': 'success'}, status=status.HTTP_200_OK)
+            else:
+                serializer = cartserialiser(data=data)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response({'data': 'success'}, status=status.HTTP_200_OK)
+                else:
+                    print(serializer.errors)
+                    return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            print("Exception:", str(e))
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request):
+        try:
+            user = request.query_params.get('user_id')
+            if not user:
+             return Response({'error': 'User ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+            data = CartData.objects.filter(user_id=user, transact=None)
+            serialdata = cartserial(data, many=True)
+
+            # Iterate through the serialized data and replace the product field with serialized product data
+            for datas in serialdata.data:
+                product_id = datas['product']  # Access the product ID from the serialized data
+                product = Product.objects.filter(id=product_id).first()
+                if product:
+                    serialproduct = ProductSerializer(product).data  # Serialize the product
+                    datas['product'] = serialproduct  # Replace the product field with serialized product data
+
+            print(serialdata.data)
+            return Response({'data': serialdata.data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print("Exception:", str(e))
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, *args, **kwargs):
+        data = request.data
+        cart_id = data.get('id')
+        cart_type = data.get('type')
+        
+        # Fetch cart by id
+        cart = CartData.objects.filter(id=cart_id).first()
+        if not cart:
+            return Response({'data': 'error', 'message': 'Cart item not found'}, status=404)
+        product = Product.objects.filter(id=cart.product.id).first()
+        if not product:
+            return Response({'data': 'error', 'message': 'Product not found'}, status=404)
+        
+        if cart_type == 'sub':
+            check = cart.quantity - 1
+            if check > 0:
+                cart.quantity -= 1
+                cart.amount = cart.quantity * product.price
+                cart.save()
+                return Response({'data': 'success', 'message': 'Offline purchase updated successfully'})
+            else:
+                return Response({'data': 'error', 'message': 'Quantity cannot be less than 0'}, status=400)
+        
+        elif cart_type == 'add':
+            cart.quantity += 1
+            cart.amount = cart.quantity * product.price 
+            cart.save()
+            return Response({'data': 'success', 'message': 'Offline purchase updated successfully'})
+        
+        return Response({'data': 'error', 'message': 'Invalid type'}, status=400)
+
+class carttransact(APIView):
+    def post(self, request):
+        try:
+            user_id = request.data.get('user')
+            transact_id = request.data.get('transact')
+
+            # Fetch the Transaction instance
+            try:
+                transaction = Transaction.objects.get(id=transact_id)
+            except Transaction.DoesNotExist:
+                return Response({'error': 'Transaction does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Fetch the cart items belonging to the user
+            cart_items = CartData.objects.filter(user=user_id, transact=None)
+            if not cart_items.exists():
+                return Response({'error': 'No cart items found for the user'}, status=status.HTTP_404_NOT_FOUND)
+
+            # Update the transact field for cart items
+            for item in cart_items:
+                item.transact = transaction
+                item.save()
+
+            return Response({'data': 'Cart updated successfully'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print("Exception:", str(e))
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class delcart(APIView):
+    def delete(self, request, id):
+        try:
+            carddel = CartData.objects.get(id=id) 
+            carddel.delete()
+            return Response({"data": 'success','message': 'deleted successfully'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Error during deletion: {str(e)}")
+            return Response({'error': f'Something went wrong: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+        
+class getprodetail(APIView):
+    def get(self,request):
+        try:
+            transacid = request.query_params.get('id')
+            prodetail = []
+            data = CartData.objects.filter(transact=transacid)
+            for cartdata in data:
+                product = Product.objects.filter(id=cartdata.product.id).first()
+                datas = {
+                    'product_name':product.product_name,
+                    'price': product.price,
+                    'quantity':cartdata.quantity,
+                    'total':cartdata.amount
+                }
+                prodetail.append(datas)
+            print(prodetail)
+            return Response({'data': prodetail}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print("Exception:", str(e))  
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class buyerct(APIView):
+    def get(self, request):
+        try:
+            userid = request.query_params.get('user')  
+            data = CartData.objects.all()
+            count = data.count()  
+            print(count)
+            return Response({'data': count}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print("Exception:", str(e))
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+class activates(APIView):
+    def post(self,request):
+        try:
+            email = request.data.get('email')
+            user = User.objects.filter(email=email).first()
+            # user['inactive'] = False
+            user.inactive = False;
+            user.save()
+            return Response({'data': 'success'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Error occurred: {str(e)}")
+            return Response({'error': 'Something went wrong', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class SendOTP(APIView):
+    def post(self, request):
+        try:
+            mobile = request.data.get('mobile')
+            password = request.data.get('password')
+            email = request.data.get('email')
+            username = request.data.get('username')
+            type = request.data.get('type')
+            otp_record = OTP.objects.filter(email=email).first()
+            if type == 'send':
+                if User.objects.filter(email=email,inactive=False).exists():
+                    return Response({'data': 'email_found'}, status=status.HTTP_200_OK)
+                elif User.objects.filter(username=username,inactive=False).exists():
+                    return Response({'data': 'username_found'}, status=status.HTTP_200_OK)
+                elif User.objects.filter(email=email,inactive=True).exists():
+                    return Response({'data': 'inactive_user'},status=status.HTTP_200_OK)
+            otp = generate_otp()
+            if otp_record:
+                    otp_record.otp = otp
+                    otp_record.save()
+                    data = { 'email': email, 'isfound': 'notfound'}
+            else:
+                    otp_data = {'email': email,'username':username,'password':password,'mobile':mobile, 'otp': otp}
+                    otp_save = OTPSerializer(data=otp_data)
+                    if otp_save.is_valid():
+                        otp_save.save()
+                        data = { 'email': email, 'isfound': 'notfound'}
+                    else:
+                        return Response(otp_save.errors, status=status.HTTP_400_BAD_REQUEST)
+            if(type == 'send'):
+                send_mail(
+                    'Your One-Time Verification Code',
+                    f"""
+                    Dear {username},
+
+                    Thank you for signing up with us!
+
+                    To complete your registration and verify your account, please enter the following One-Time Password (OTP) on the verification page:
+
+                    Your OTP is: {otp}
+
+                    If you did not request this, please ignore this email.
+
+                    Thank you for being a part of our community!  
+                    If you have any questions, feel free to reach out to us at info@mi-bot.com.
+
+                    Best regards,  
+                    The MiBot Ventures Team
+                    """,
+                    os.getenv('EMAIL_HOST_USER'),
+                    [email],
+                    fail_silently=False
+                )
+            elif(type == 'resend'):
+                send_mail(
+                    'Your Requested OTP - Resend',
+                    f"""
+                    Dear User,
+
+                    As per your request, we are resending your One-Time Password (OTP).
+
+                    Your OTP is: {otp}
+
+                    If you did not request this, please ignore this email.
+
+                    Thank you for being a valued user!  
+                    If you have any questions, feel free to reach out to us at info@mi-bot.com.
+
+                    Best regards,  
+                    The MiBot Ventures Team
+                    """,
+                    os.getenv('EMAIL_HOST_USER'),
+                    [email],
+                    fail_silently=False
+                )
+
+            return Response({'data': data, 'message': "OTP sent successfully"}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            print(f"Error occurred: {str(e)}")
+            return Response({'error': 'Something went wrong', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def get(self, request):
+        try:
+            email = request.query_params.get('email')
+            code = request.query_params.get('code')
+            otp = OTP.objects.filter(email=email).first()
+            if otp is None:
+                return Response({'error': 'OTP not found'}, status=status.HTTP_404_NOT_FOUND)
+            serializer = OTPSerializer(otp)
+            if serializer.data.get('otp') == code:
+                otp.delete()  
+                return Response({'data': 'matched'}, status=status.HTTP_201_CREATED)
+            else:
+                return Response({'data': 'unmatched'}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': 'Something went wrong', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class Signup(APIView):
+    def post(self, request):
+        try:
+            email = request.data.get('email')
+            code = request.data.get('code')
+            forget = request.data.get('forget')
+            otp = OTP.objects.filter(email=email,otp=code).first()
+            if otp is None:
+                return Response({'data': 'unmatched'}, status=status.HTTP_201_CREATED)
+                # return Response({'error': 'OTP not found'}, status=status.HTTP_404_NOT_FOUND)
+            elif forget:
+                otp.delete() 
+                return Response({'data': 'matched'}, status=status.HTTP_201_CREATED) 
+            else:
+                data = {'email':otp.email,'mobile':otp.mobile,'password':otp.password,'username':otp.username}
+                if OfflinePurchase.objects.filter(customer_email=email).exists() or OfflinePurchase.objects.filter(customer_contact_number=otp.mobile).exists():
+                    data['subscription'] = True
+                else:
+                    data['subscription'] = False
+                serializer = UserSerializer(data=data,partial=True)
+                if serializer.is_valid():
+                    raw_password = serializer.validated_data.get('password')
+                    encrypted_password = encrypt_password(raw_password)
+                    serializer.save(password=encrypted_password)
+                    otp.delete()
+                    return Response({'data': 'matched'}, status=status.HTTP_201_CREATED)
+                else:
+                    print(serializer.errors)
+                    return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                  
+        except Exception as e:
+            print(f"Error: {str(e)}") 
+            return Response({'error': 'Something went wrong', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class Forget(APIView):
+    def post(self, request):
+        try:
+            email = request.data.get("email")
+            if User.objects.filter(email=email,inactive=False).exists():
+                otp = generate_otp()
+                otp_record = OTP.objects.filter(email=email).first()
+                if otp_record:
+                        otp_record.otp = otp
+                        otp_record.save()
+                else:
+                    otp_data = {'email': email, 'otp': otp}
+                    otp_save = OTPSerializer(data=otp_data,partial=True)
+                    if otp_save.is_valid():
+                        otp_save.save()
+                    else:
+                        return Response(otp_save.errors, status=status.HTTP_400_BAD_REQUEST)
+
+                send_mail(
+                    'Reset Your Password',
+                    f"""
+                    Dear User,
+
+                    We received a request to reset your password.
+
+                    To reset your password, please use the following One-Time Password (OTP) on the reset page:
+
+                    Your OTP is: {otp}
+
+                    If you did not request a password reset, please ignore this email and your password will remain unchanged.
+
+                    Thank you for using our services!  
+                    If you have any questions, feel free to reach out to us at info@mi-bot.com.
+
+                    Best regards,  
+                    The MiBot Ventures Team
+                    """,
+                    os.getenv('EMAIL_HOST_USER'),
+                    [email],
+                    fail_silently=False
+                )
+
+                datas = {'email': email, 'isexists': 'yes'}
+                return Response({'data': datas, 'message': "Mail sent successfully"}, status=status.HTTP_201_CREATED)
+            else:
+                data = {'email': email, 'isexists': 'no'}
+                return Response({'data': data, 'message': "Unsuccessful, try again"}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            print(f"Error: {str(e)}")
+            return Response({'error': 'Something went wrong', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+class UserReviews(APIView):
+    def post(self, request):
+        try:
+            data = request.data
+            if 'course' not in data or not data['course']:
+                return Response({'error': 'Course ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            course = Course.objects.filter(id=data['course']).first()
+            if not course:
+                return Response({'error': 'Invalid course ID.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            serializer = UserReviewSerializer(data=data)
+            if serializer.is_valid():
+                review_data = serializer.save()
+                review_data_list = UserReview.objects.filter(course=review_data.course)
+                reviews_list = []
+                rating_sum = 0
+
+                for review in review_data_list:
+                    reviewer = User.objects.get(id=review.user.id)
+                    reviews_list.append({
+                        'id':review.id,
+                        'username': reviewer.username,
+                        'rating': review.rating,
+                        'review': review.review,
+                        'createdAt': review.created_at
+                    })
+                    rating_sum += review.rating
+                
+                rating_avg = rating_sum / len(reviews_list)
+                course.rating = rating_avg
+                course.save()
+                
+                return Response({'data': reviews_list}, status=status.HTTP_200_OK)
+            else:
+                print("Serializer errors:", serializer.errors)  
+                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
+        except Exception as e:
+            print("Exception:", str(e))  
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request):
+        try:
+            course_id = request.query_params.get('id')
+        
+            if not course_id:
+                return Response({'error': 'Course ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+            review_data = UserReview.objects.filter(course=course_id)
+            reviews_list = []
+
+            for review in review_data:
+                reviews_list.append({
+                    'id':review.id,
+                    'username': review.user.username,  
+                    'rating': review.rating,
+                    'review': review.review,
+                    'createdAt': review.created_at
+                })
+
+            return Response({'data': reviews_list}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print("Exception:", str(e))  
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+class delcoursereview(APIView):
+    def delete(self, request, id):
+        try:
+            reviewdel = UserReview.objects.get(id=id) 
+            reviewdel.delete()
+            return Response({"data": 'success','message': 'deleted successfully'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Error during deletion: {str(e)}")
+            return Response({'error': f'Something went wrong: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+        
+class OrderAPIView(APIView):
+    def post(self, request):
+        try:
+            data = request.data
+            user_id = data.get('user_id')
+            amount = data.get('amount')
+            currency = data.get('currency')
+            receipt = data.get('receipt')
+            response = client.order.create(data={'amount': amount, 'currency': currency, 'receipt': receipt})
+            response['user_id'] = user_id
+            print(response)
+            return Response({'data': response}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print("Exception:", str(e)) 
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class CheckoutAPIView(APIView):
+    def post(self, request):
+        try:
+            data = request.data
+            user_id = data.get('user_id')
+            # amount = data.get('amount')
+            # currency = data.get('currency')
+            # receipt = data.get('receipt')
+            razorpay_order_id = data.get('razorpay_order_id')
+            razorpay_payment_id = data.get('razorpay_payment_id')
+            razorpay_signature = data.get('razorpay_signature')
+            print(data)
+            # serializedTransaction = TransactionCheckOutSerializer(data=data)
+            # if(serializedTransaction.is_valid()):
+            response = client.utility.verify_payment_signature({'razorpay_order_id': razorpay_order_id,'razorpay_payment_id': razorpay_payment_id, 'razorpay_signature': razorpay_signature})
+            serializedTransaction = TransactionCheckOutSerializer(data=data)
+            if serializedTransaction.is_valid():
+                # Save the serialized data
+                serializedTransaction.save()
+                usersub = User.objects.filter(id=user_id).first()
+                usersub.subscription = True
+                usersub.role = 'CourseSubscribedUser'
+                usersub.save()
+                print(serializedTransaction.data)
+                return Response({'data': serializedTransaction.data}, status=status.HTTP_200_OK)
+            else:
+                print(serializedTransaction.errors)
+                return Response({'error': serializedTransaction.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print("Exception:", str(e)) 
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

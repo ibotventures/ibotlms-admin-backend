@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, OfflinePurchase, Course, Module, Assessment, Certification, CertificationQuestion, Category, Product, UserCourseProgress, UserAssessmentScore, UserCertificationScore, ProductReview, UserReview, Deleteaccount, OTP, Transaction, UserCourseProgress, ProductReview, UserReview
+from .models import CartData, SubscriptionMoney, User, OfflinePurchase, Course, Module, Assessment, Certification, CertificationQuestion, Category, Product, UserCourseProgress, UserAssessmentScore, UserCertificationScore, ProductReview, UserReview, Deleteaccount, OTP, Transaction, UserCourseProgress, ProductReview, UserReview
 from django.core.files.storage import default_storage
 
 from rest_framework import serializers
@@ -249,3 +249,28 @@ class Productreviewserialiser(serializers.ModelSerializer):
     class Meta:
         model = ProductReview
         fields = '__all__'
+        
+class categoryserialiser(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['category_name']
+
+class subscribeserialiser(serializers.ModelSerializer):
+    class Meta:
+        model = SubscriptionMoney
+        fields = ['id','amount','receiptcount']
+
+class transactiondetails(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = ['id','user_id','razorpay_order_id','razorpay_payment_id','amount','receipt']
+
+class cartserialiser(serializers.ModelSerializer):
+    class Meta:
+        model = CartData
+        fields = ['user','product','amount']
+
+class cartserial(serializers.ModelSerializer):
+        class Meta:
+            model = CartData
+            fields = ['id','quantity','user','product','amount']
