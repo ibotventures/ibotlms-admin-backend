@@ -5,11 +5,15 @@ from django.core.files.storage import default_storage
 from rest_framework import serializers
 from django.core.files.storage import default_storage
 
-class CourseSerializer(serializers.ModelSerializer):
+class CourseCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = ['course_name', 'course_description', 'course_duration', 'status', 'product', 'course_cover_image', 'video']
         
+class CourseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = '__all__'
 class CourseFilterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course

@@ -6,6 +6,7 @@ from django.db.models import Count, Sum, Avg
 from .filters import CourseFilter,ProductFilter
 from .models import CartData, SubscriptionMoney, User, OfflinePurchase, Module, Course, Assessment, Certification, CertificationQuestion, Category, Product, UserCourseProgress, UserAssessmentScore, UserCertificationScore, ProductReview, UserReview, Deleteaccount, OTP, Transaction, UserCourseProgress, ProductReview, UserReview
 from .serializers import (
+    CourseCreateSerializer,
     CourseFilterSerializer,
     CourseSerializer,
     CertificationQuestionSerializer,
@@ -201,7 +202,7 @@ class CourseListCreateAPIView(APIView):
 
     def post(self, request):
         logger.info(f"Request: {request.method} {request.get_full_path()}")
-        serializer = CourseSerializer(data=request.data)
+        serializer = CourseCreateSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({"data": serializer.data}, status=status.HTTP_201_CREATED)
