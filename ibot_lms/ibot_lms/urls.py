@@ -5,7 +5,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('app/', include('ibot_lms.lmsappv1.urls')),
+    path('app/', include('lmsappv1.urls')),
 ]
 
 # Add static and media file handling during development
