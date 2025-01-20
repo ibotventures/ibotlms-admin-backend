@@ -111,6 +111,19 @@ class SignInAPIView(APIView):
         users = User.objects.all()
         serializer = UserSerializer(users, many=True)
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+    
+    def path(self, request, pk):
+        user = User.objects.get(pk=pk)
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+        return Response({"message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, pk):
+        user = User.objects.get(pk=pk)
+        user.delete()
+        return Response({"message": "User deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 class SignUpAPIView(APIView):
     
