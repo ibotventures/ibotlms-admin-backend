@@ -8,7 +8,7 @@ from django.core.files.storage import default_storage
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
-        fields = ['course_name', 'course_description', 'course_duration','course_price', 'status', 'product', 'course_cover_image', 'video']
+        fields = ['course_name', 'course_description', 'course_duration', 'status', 'product', 'course_cover_image', 'video']
         
 class CourseFilterSerializer(serializers.ModelSerializer):
     class Meta:
