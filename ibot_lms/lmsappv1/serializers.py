@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CartData, SubscriptionMoney, User, OfflinePurchase, Course, Module, Assessment, Certification, CertificationQuestion, Category, Product, UserCourseProgress, UserAssessmentScore, UserCertificationScore, ProductReview, UserReview, Deleteaccount, OTP, Transaction, UserCourseProgress, ProductReview, UserReview
+from .models import CartData, SubscriptionMoney, User, OfflinePurchase, Course, Module, Assessment, Certification, CertificationQuestion, Category, Product, UserCourseProgress, UserAssessmentScore, UserCertificationScore, ProductReview, UserReview, Deleteaccount, OTP, Transaction, UserCourseProgress, ProductReview, UserReview, AdvertisementBanner
 from django.core.files.storage import default_storage
 
 from rest_framework import serializers
@@ -98,14 +98,14 @@ class UserDetailsSerializer(serializers.ModelSerializer):
 class CertificationQuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = CertificationQuestion
-        fields = ['question', 'option1', 'option2', 'option3', 'option4', 'answer', 'id']
+        fields = ['question', 'option1', 'option2', 'option3', 'option4', 'answer', 'id', 'certification']
 
 class CertificationsSerializer(serializers.ModelSerializer):
     questions = CertificationQuestionSerializer(many=True)
 
     class Meta:
         model = Certification
-        fields = ['name', 'description', 'duration', 'questions', 'course']
+        fields = ['name', 'description', 'questions', 'course']
 
     def create(self, validated_data):
         questions_data = validated_data.pop('questions')
@@ -168,7 +168,7 @@ class TransactionOrderSerializer(serializers.ModelSerializer):
 class TransactionCheckOutSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
-        fields = ['user_id', 'razorpay_payment_id', 'razorpay_order_id', 'razorpay_signature']
+        fields = ['user_id', 'amount', 'currency', 'receipt','razorpay_payment_id', 'razorpay_order_id', 'razorpay_signature','id']
 
 class CourseListSerializer(serializers.ModelSerializer):
     class Meta:
@@ -278,3 +278,8 @@ class cartserial(serializers.ModelSerializer):
         class Meta:
             model = CartData
             fields = ['id','quantity','user','product','amount']
+
+class Adserial(serializers.ModelSerializer):
+    class Meta:
+        model = AdvertisementBanner
+        fields = '__all__'

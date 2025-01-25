@@ -6,7 +6,7 @@ from .views import (CourseListCreateAPIView, CourseDetailAPIView, SignUpAPIView,
                     UploadCourse, UploadModule, AssessmentQuestion, delaccount, DeleteModuleView, deleteQuestion, deleteCourse, courseconfirm, addproduct,
                     OfflinePurchaseUserAPIView, deletecertifyques, StatisticsAPIView, canaccesscourse, tasktrack, canviewmodule, pickup, FetchCoursePreview,
                     courselist, checkanswers, checkcertifyanswer, CourseListView, ProductView, ProductReviews, Eachproduct, Userscheck, UserReviews, 
-                    UserCourses, categories, OrderAPIView, CheckoutAPIView, CertificationUpdateAPIView)
+                    UserCourses, categories, OrderAPIView, CheckoutAPIView, CertificationUpdateAPIView,Advertisement,CertificationAPIViews,Certify)
 
 urlpatterns = [
     path('courses/', CourseListCreateAPIView.as_view(), name='course-list-create'),
@@ -78,7 +78,7 @@ urlpatterns = [
     path('order/', OrderAPIView.as_view(), name='order'),    
     path('orderStatus/', CheckoutAPIView.as_view(), name='checkout'),
    
-    path('certifications/', CertificationAPIView.as_view(), name='certifications'),
+    path('certifications/', CertificationAPIViews.as_view(), name='certifications'),
     path('certificationsupdate/<uuid:pk>/', CertificationUpdateAPIView.as_view(), name='certification-detail'),  
     
     path('buyercount/', buyerct.as_view(),name='buyercount'),
@@ -91,5 +91,7 @@ urlpatterns = [
     path('delcoursereview/<uuid:id>/',delcoursereview.as_view(),name='delcoursereview'),
     path('delproductreview/<uuid:id>/',delproductreview.as_view(),name='delproductreview'),
     path('getsubscription/', SubscriptionAmount.as_view(), name='getsubscription'),
+    path('advertise/',Advertisement.as_view(),name='advertise'), 
+    path('issuecertificate/',Certify.as_view(),name='issuecertificate'),
     
 ]

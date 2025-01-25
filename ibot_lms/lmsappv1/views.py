@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Count, Sum, Avg
 from .filters import CourseFilter,ProductFilter
-from .models import CartData, SubscriptionMoney, User, OfflinePurchase, Module, Course, Assessment, Certification, CertificationQuestion, Category, Product, UserCourseProgress, UserAssessmentScore, UserCertificationScore, ProductReview, UserReview, Deleteaccount, OTP, Transaction, UserCourseProgress, ProductReview, UserReview
+from .models import CartData, SubscriptionMoney, User, OfflinePurchase, Module, Course, Assessment, Certification, CertificationQuestion, Category, Product, UserCourseProgress, UserAssessmentScore, UserCertificationScore, ProductReview, UserReview, Deleteaccount, OTP, Transaction, UserCourseProgress, ProductReview, UserReview,AdvertisementBanner
 from .serializers import (
     CourseCreateSerializer,
     CourseFilterSerializer,
@@ -35,11 +35,12 @@ from .serializers import (
     cartserialiser,
     cartserial,
     TransactionCheckOutSerializer,
+    TransactionOrderSerializer,
     subscribeserialiser, 
     transactiondetails,
     UserCertificationSerialiser,
     CertificationsSerializer,
-    TransactionOrderSerializer
+    Adserial
 
 )
 from .methods import generate_otp, purchasedUser_encode_token,visitor_encode_token,courseSubscribedUser_encode_token, admin_encode_token, encrypt_password
@@ -687,7 +688,9 @@ class SignIn(APIView):
             data = request.data
             email = data.get("email")
             password = data.get("password")
-            user = User.objects.get(email=email)
+            if User.objects.filter(email=email,inactive=True).exists():
+                return Response({'data': 'inactive_user'},status=status.HTTP_200_OK)
+            user = User.objects.get(email=email,inactive=False)
             encryptPassword = encrypt_password(password) 
             if OfflinePurchase.objects.filter(customer_email=email).exists() or OfflinePurchase.objects.filter(customer_contact_number=user.mobile).exists():
                     user.subscription = True
@@ -730,11 +733,60 @@ class SignIn(APIView):
             logger.error(e)
             return Response({"message": str(e)}, status=status.HTTP_502_BAD_GATEWAY)
 
+# class SignIn(APIView):
+#     def post(self, request):
+#         try:
+#             data = request.data
+#             email = data.get("email")
+#             password = data.get("password")
+#             user = User.objects.get(email=email)
+#             encryptPassword = encrypt_password(password) 
+#             if OfflinePurchase.objects.filter(customer_email=email).exists() or OfflinePurchase.objects.filter(customer_contact_number=user.mobile).exists():
+#                     user.subscription = True
+#             if user.subscription:
+#                 if user.role == 'visitor':
+#                     user.role = 'purchasedUser'
+#                     user.save()
+#             if user.password == encryptPassword:
+#                 if user.role == "purchasedUser":
+#                     token = purchasedUser_encode_token({"id": str(user.id), "role": user.role})
+#                 elif user.role == "CourseSubscribedUser":
+#                     token = courseSubscribedUser_encode_token({"id": str(user.id), "role": user.role})
+#                 elif user.role == "admin":
+#                     token = admin_encode_token({"id": str(user.id), "role": user.role})
+#                 elif user.role == "visitor":
+#                     token = visitor_encode_token({"id": str(user.id), "role": user.role})
+#                 else:
+#                     return Response(
+#                         {"message": "Invalid role"}, status=status.HTTP_400_BAD_REQUEST
+#                     )
+                
+#                 refresh = RefreshToken.for_user(user)
+#                 return Response(
+#                     {
+#                         "token": str(token),
+#                         "access": str(refresh.access_token),
+#                         "data": {"user_id":user.id,'username':user.username, "subscription":user.subscription},  
+#                         "message": "User logged in successfully",
+#                     },
+#                     status=status.HTTP_200_OK,
+#                 )
+#             return Response(
+#                 {"message": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
+#             )
+#         except User.DoesNotExist:
+#             return Response(
+#                 {"message": "User not found"}, status=status.HTTP_404_NOT_FOUND
+#             )
+#         except Exception as e:
+#             logger.error(e)
+#             return Response({"message": str(e)}, status=status.HTTP_502_BAD_GATEWAY)
+
 class Forget(APIView):
     def post(self, request):
         try:
             email = request.data.get("email")
-            if User.objects.filter(email=email).exists():
+            if User.objects.filter(email=email,inactive=False).exists():
                 otp = generate_otp()
                 otp_record = OTP.objects.filter(email=email).first()
                 if otp_record:
@@ -747,19 +799,38 @@ class Forget(APIView):
                         otp_save.save()
                     else:
                         return Response(otp_save.errors, status=status.HTTP_400_BAD_REQUEST)
+
                 send_mail(
-                    'Reset Password',
-                    f'Reset your password by entering OTP - {otp}',
-                    'ibotventures123@gmail.com',
+                    'Reset Your Password',
+                    f"""
+                    Dear User,
+
+                    We received a request to reset your password.
+
+                    To reset your password, please use the following One-Time Password (OTP) on the reset page:
+
+                    Your OTP is: {otp}
+
+                    If you did not request a password reset, please ignore this email and your password will remain unchanged.
+
+                    Thank you for using our services!  
+                    If you have any questions, feel free to reach out to us at info@mi-bot.com.
+
+                    Best regards,  
+                    The MiBOT Ventures Team
+                    """,
+                    os.getenv('EMAIL_HOST_USER'),
                     [email],
                     fail_silently=False
                 )
+
                 datas = {'email': email, 'isexists': 'yes'}
                 return Response({'data': datas, 'message': "Mail sent successfully"}, status=status.HTTP_201_CREATED)
             else:
                 data = {'email': email, 'isexists': 'no'}
                 return Response({'data': data, 'message': "Unsuccessful, try again"}, status=status.HTTP_201_CREATED)
         except Exception as e:
+            print(f"Error: {str(e)}")
             return Response({'error': 'Something went wrong', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class UpdatePassword(APIView):
@@ -1729,7 +1800,7 @@ class deleteCourse(APIView):
             print(f"Error during deletion: {str(e)}")
             return Response({'error': f'Something went wrong: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
-class CertificationAPIView(APIView):
+class CertificationAPIViews(APIView):
     def get(self, request, *args, **kwargs):
         course_id = request.query_params.get('course_id', None)
         if course_id:
@@ -1916,6 +1987,75 @@ class UserReviews(APIView):
             print("Exception:", str(e))  
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
+# class UserCourses(APIView):
+
+#     def get(self, request):
+#         try:
+#             user_id = request.query_params.get('id')
+#             print(user_id)
+#             if not user_id:
+#                 return Response({'error': 'Invalid user ID'}, status=status.HTTP_400_BAD_REQUEST)
+
+#             # Initialize response data
+#             completed = 0
+#             completed_module = 0
+#             ongoing_courses = []
+
+#             # Fetch data for the user
+#             course_data = UserCourseProgress.objects.filter(user=user_id)
+#             certification_data = UserCertificationScore.objects.filter(user=user_id)
+
+#             if course_data:
+#                 courses_started = len(course_data)
+#                 for courses in course_data:
+#                     course_id = courses.course.id
+#                     if not course_id:
+#                         continue  # Skip invalid course IDs
+
+#                     # Fetch course details
+#                     course = Course.objects.filter(id=course_id).first()
+#                     if not course:
+#                         continue  # Skip non-existent courses
+
+#                     # Fetch modules and user assessments
+#                     module = Module.objects.filter(course=course)
+#                     total_module_count = len(module)
+
+#                     userassess = UserAssessmentScore.objects.filter(user=user_id, course=course)
+#                     completed_module = 0
+#                     for module_completed in userassess:
+#                         per = (module_completed.obtained_marks / module_completed.total_marks) * 100
+#                         if per >= 65:
+#                             completed_module += 1
+
+#                     ongoing_courses.append({
+#                         'course_id': course_id,
+#                         'course_image': course.course_cover_image.url if course.course_cover_image else None,
+#                         'course_name': course.course_name,
+#                         'total_module': total_module_count,
+#                         'completed_module': completed_module
+#                     })
+
+#             if certification_data:
+#                 for certify in certification_data:
+#                     per = (certify.obtained_marks / certify.total_marks) * 100
+#                     if per >= 65:
+#                         completed += 1
+#             user = User.objects.filter(id=user_id).first()
+#             # Construct response
+#             datas = {
+#                 'completed_course_count': completed,
+#                 'course_started':courses_started,
+#                 'name':user.username,
+#                 'profiles': user.profile.url,
+#                 'ongoing_courses': ongoing_courses
+#             }
+#             return Response({'data': datas}, status=status.HTTP_200_OK)
+
+#         except Exception as e:
+#             print("Exception:", str(e))
+#             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 class UserCourses(APIView):
 
     def get(self, request):
@@ -1934,6 +2074,7 @@ class UserCourses(APIView):
             course_data = UserCourseProgress.objects.filter(user=user_id)
             certification_data = UserCertificationScore.objects.filter(user=user_id)
 
+            courses_started = 0
             if course_data:
                 courses_started = len(course_data)
                 for courses in course_data:
@@ -1971,10 +2112,24 @@ class UserCourses(APIView):
                     if per >= 65:
                         completed += 1
 
+            user = User.objects.filter(id=user_id).first()
+            if not user:
+                return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+            # Check if profile exists and has an associated file
+            profile_url = None
+            if user.profile and hasattr(user.profile, 'url'):
+                try:
+                    profile_url = user.profile.url  # Attempt to access the URL
+                except ValueError:
+                    profile_url = None  # Handle case where no file is associated
+
             # Construct response
             datas = {
                 'completed_course_count': completed,
-                'course_started':courses_started,
+                'course_started': courses_started,
+                'name': user.username,
+                'profile': profile_url,
                 'ongoing_courses': ongoing_courses
             }
             return Response({'data': datas}, status=status.HTTP_200_OK)
@@ -1982,6 +2137,27 @@ class UserCourses(APIView):
         except Exception as e:
             print("Exception:", str(e))
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+# class delaccount(APIView):
+#     def post(self, request):
+#         try:
+#             data = request.data
+#             id = data.get('id')
+#             reason = data.get('reason')
+#             serializer = delserialiser(data={'reason': reason})  # Ensure 'reason' is passed as a dictionary
+
+#             if serializer.is_valid():
+#                 serializer.save()
+#                 delacc = User.objects.get(id=id) 
+#                 delacc.delete()
+#                 return Response({"data": 'success', 'message': 'Deleted successfully'}, status=status.HTTP_200_OK)
+#             else:
+#                 return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
+#         except User.DoesNotExist:
+#             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+#         except Exception as e:
+#             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class delaccount(APIView):
     def post(self, request):
@@ -1994,7 +2170,10 @@ class delaccount(APIView):
             if serializer.is_valid():
                 serializer.save()
                 delacc = User.objects.get(id=id) 
-                delacc.delete()
+                # delacc['inactive'] = True;
+                delacc.inactive = True  # Use attribute access instead of indexing
+                # delacc.delete()
+                delacc.save()
                 return Response({"data": 'success', 'message': 'Deleted successfully'}, status=status.HTTP_200_OK)
             else:
                 return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -2002,6 +2181,7 @@ class delaccount(APIView):
         except User.DoesNotExist:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            print("Exception:", str(e))
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
 class categories(APIView):
@@ -2400,7 +2580,7 @@ class SendOTP(APIView):
                     If you have any questions, feel free to reach out to us at info@mi-bot.com.
 
                     Best regards,  
-                    The MiBot Ventures Team
+                    The MiBOT Ventures Team
                     """,
                     os.getenv('EMAIL_HOST_USER'),
                     [email],
@@ -2422,7 +2602,7 @@ class SendOTP(APIView):
                     If you have any questions, feel free to reach out to us at info@mi-bot.com.
 
                     Best regards,  
-                    The MiBot Ventures Team
+                    The MiBOT Ventures Team
                     """,
                     os.getenv('EMAIL_HOST_USER'),
                     [email],
@@ -2520,7 +2700,7 @@ class Forget(APIView):
                     If you have any questions, feel free to reach out to us at info@mi-bot.com.
 
                     Best regards,  
-                    The MiBot Ventures Team
+                    The MiBOT Ventures Team
                     """,
                     os.getenv('EMAIL_HOST_USER'),
                     [email],
@@ -2660,3 +2840,66 @@ class CheckoutAPIView(APIView):
         except Exception as e:
             print("Exception:", str(e)) 
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class Advertisement(APIView):
+    def get(self, request):
+        try:
+            data = AdvertisementBanner.objects.all()
+            Ad = Adserial(data, many=True)
+            return Response({'data': Ad.data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print("Exception:", str(e))  
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self,request):
+        try:
+            data = request.data
+            serializer = Adserial(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({'data': 'success'}, status=status.HTTP_200_OK)
+            else:
+                print(serializer.errors)
+                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print("Exception:", str(e))  
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+class Certify(APIView):
+    def get(self, request):
+        try:
+            # Get the user ID from query parameters
+            user_id = request.query_params.get('user_id')
+            if not user_id:
+                return Response({'error': 'User ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Fetch user details
+            user = User.objects.filter(id=user_id).first()
+            if not user:
+                return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+            # Construct the full name
+            full_name = f"{user.first_name or ''} {user.middle_name or ''} {user.last_name or ''}".strip()
+
+            # Fetch certifications and related course details
+            certification_data = UserCertificationScore.objects.filter(user_id=user_id).select_related('course')
+            certify_list = []
+            for certify in certification_data:
+                if certify.total_marks > 0:  # Avoid division by zero
+                    percentage = (certify.obtained_marks / certify.total_marks) * 100
+                    if percentage >= 65:
+                        certify_list.append({
+                            'course_name': certify.course.course_name,  # Using select_related for optimization
+                        })
+
+            # Prepare response data
+            data = {
+                'certificates': certify_list,
+                'user_name': full_name
+            }
+            return Response({'data': data}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            # Log and return the error
+            print("Exception:", str(e))
+            return Response({'error': f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
