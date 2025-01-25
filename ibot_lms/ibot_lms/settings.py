@@ -45,7 +45,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
-    'ibot_lms.lmsappv1',
+    'lmsappv1',
     'rest_framework',
     'corsheaders',
     'django.contrib.admin',
@@ -61,7 +61,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ),
-    "DEFAULT_RENDERER_CLASSES": ("ibot_lms.lmsappv1.renders.CustomResponseRenderer",),
+    "DEFAULT_RENDERER_CLASSES": ("lmsappv1.renders.CustomResponseRenderer",),
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.FormParser',
@@ -82,7 +82,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'ibot_lms.ibot_lms.urls'
+ROOT_URLCONF = 'ibot_lms.urls'
 
 TEMPLATES = [
     {
@@ -100,7 +100,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'ibot_lms.ibot_lms.wsgi.application'
+WSGI_APPLICATION = 'ibot_lms.wsgi.application'
 
 CORS_ALLOWED_ORIGINS = [
    "http://147.93.27.47:4200",
