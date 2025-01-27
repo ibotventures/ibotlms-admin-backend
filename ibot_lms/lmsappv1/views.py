@@ -123,7 +123,7 @@ class SignInAPIView(APIView):
         serializer = UserSerializer(users, many=True)
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
     
-    def path(self, request, pk):
+    def patch(self, request, pk):
         user = User.objects.get(pk=pk)
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
