@@ -6,7 +6,7 @@ from .views import (CourseListCreateAPIView, CourseDetailAPIView, SignUpAPIView,
                     UploadCourse, UploadModule, AssessmentQuestion, delaccount, DeleteModuleView, deleteQuestion, deleteCourse, courseconfirm, addproduct,
                     OfflinePurchaseUserAPIView, deletecertifyques, StatisticsAPIView, canaccesscourse, tasktrack, canviewmodule, pickup, FetchCoursePreview,
                     courselist, checkanswers, checkcertifyanswer, CourseListView, ProductView, ProductReviews, Eachproduct, Userscheck, UserReviews, 
-                    UserCourses, categories, OrderAPIView, CheckoutAPIView, CertificationUpdateAPIView,Advertisement,CertificationAPIViews,Certify)
+                    UserCourses, categories, OrderAPIView, CheckoutAPIView, CertificationUpdateAPIView,Advertisement,CertificationAPIViews,Certify, ActivityUploads, Checkstocks)
 
 urlpatterns = [
     path('courses/', CourseListCreateAPIView.as_view(), name='course-list-create'),
@@ -93,5 +93,7 @@ urlpatterns = [
     path('getsubscription/', SubscriptionAmount.as_view(), name='getsubscription'),
     path('advertise/',Advertisement.as_view(),name='advertise'), 
     path('issuecertificate/',Certify.as_view(),name='issuecertificate'),
+    path('activityuploading/',ActivityUploads.as_view(),name='activityuploading'),
+    path('checkstocks/',Checkstocks.as_view(),name='checkstocks')
     
 ]

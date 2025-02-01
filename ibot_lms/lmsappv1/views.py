@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Count, Sum, Avg
 from .filters import CourseFilter,ProductFilter
-from .models import CartData, SubscriptionMoney, User, OfflinePurchase, Module, Course, Assessment, Certification, CertificationQuestion, Category, Product, UserCourseProgress, UserAssessmentScore, UserCertificationScore, ProductReview, UserReview, Deleteaccount, OTP, Transaction, UserCourseProgress, ProductReview, UserReview,AdvertisementBanner
+from .models import CartData, SubscriptionMoney, User, OfflinePurchase, Module, Course, Assessment, Certification, CertificationQuestion, Category, Product, UserCourseProgress, UserAssessmentScore, UserCertificationScore, ProductReview, UserReview, Deleteaccount, OTP, Transaction, UserCourseProgress, ProductReview, UserReview,AdvertisementBanner, ActivityFile
 from .serializers import (
     CourseCreateSerializer,
     CourseFilterSerializer,
@@ -40,7 +40,8 @@ from .serializers import (
     transactiondetails,
     UserCertificationSerialiser,
     CertificationsSerializer,
-    Adserial
+    Adserial,
+    ActivitiesSerializers
 
 )
 from .methods import generate_otp, purchasedUser_encode_token,visitor_encode_token,courseSubscribedUser_encode_token, admin_encode_token, encrypt_password
@@ -2376,7 +2377,7 @@ class cartproduct(APIView):
                 return Response({'error': 'Product ID and User ID are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
             # Check if the product exists in the cart without a transaction
-            cart_data = CartData.objects.filter(product=proid, transact=None).first()
+            cart_data = CartData.objects.filter(user=user_id,product=proid, transact=None).first()
             if cart_data:
                 product = Product.objects.filter(id=cart_data.product.id).first()
                 cart_data.quantity += 1
@@ -2443,10 +2444,11 @@ class cartproduct(APIView):
                 return Response({'data': 'error', 'message': 'Quantity cannot be less than 0'}, status=400)
         
         elif cart_type == 'add':
-            cart.quantity += 1
-            cart.amount = cart.quantity * product.price 
-            cart.save()
-            return Response({'data': 'success', 'message': 'Offline purchase updated successfully'})
+            if(product.stocks > cart.quantity):
+                cart.quantity += 1
+                cart.amount = cart.quantity * product.price 
+                cart.save()
+            return Response({'data': 'success'},status=200)
         
         return Response({'data': 'error', 'message': 'Invalid type'}, status=400)
 
@@ -2459,7 +2461,8 @@ class carttransact(APIView):
             # Fetch the Transaction instance
             try:
                 transaction = Transaction.objects.get(id=transact_id)
-            except Transaction.DoesNotExist:
+            except Transaction.DoesNotExist as e:
+                print("Exception:", str(e))
                 return Response({'error': 'Transaction does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
             # Fetch the cart items belonging to the user
@@ -2469,8 +2472,11 @@ class carttransact(APIView):
 
             # Update the transact field for cart items
             for item in cart_items:
+                stockupdate = Product.objects.filter(id=item.product.id).first()
+                stockupdate.stocks = stockupdate.stocks - item.quantity
                 item.transact = transaction
                 item.save()
+                stockupdate.save()
 
             return Response({'data': 'Cart updated successfully'}, status=status.HTTP_200_OK)
         except Exception as e:
@@ -2903,5 +2909,50 @@ class Certify(APIView):
 
         except Exception as e:
             # Log and return the error
+            print("Exception:", str(e))
+            return Response({'error': f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class ActivityUploads(APIView):
+    def post(self,request):
+        try:
+            data = request.data
+            user = data.get('user')
+            course = data.get('course')
+            module = data.get('module')
+            files = self.request.FILES 
+            useruploads = files.get('userupload')
+            isuserfound = ActivityFile.objects.filter(user=user,course=course,module=module).first()
+            if not isuserfound:
+                userupload = default_storage.save(useruploads.name, useruploads)  
+                activity = ActivityFile.objects.create(
+                    user=user,
+                    course=course,
+                    userupload=userupload,
+                    module=module
+                )
+                serializer = ActivitiesSerializers(activity)
+            else:
+                filedata = isuserfound.userupload
+                default_storage.delete(filedata)
+                useruploading = default_storage.save(useruploads.name, useruploads)  
+                isuserfound.userupload = useruploading
+                isuserfound.save()
+            return Response({'data': 'successfully uploaded'}, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            print("Exception:", str(e))
+            return Response({'error': f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class Checkstocks(APIView):
+    def post(self,request):
+        try:
+            user = request.data.get('user')
+            cart_items = CartData.objects.filter(user=user, transact=None)
+            for productid in cart_items:
+                productstock = Product.objects.filter(id=productid.product.id).first()
+                if(productstock.stocks < productid.quantity):
+                    return Response({'data': 'no stock'}, status=status.HTTP_200_OK)
+            return Response({'data': 'success'}, status=status.HTTP_200_OK)
+        except Exception as e:
             print("Exception:", str(e))
             return Response({'error': f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CartData, SubscriptionMoney, User, OfflinePurchase, Course, Module, Assessment, Certification, CertificationQuestion, Category, Product, UserCourseProgress, UserAssessmentScore, UserCertificationScore, ProductReview, UserReview, Deleteaccount, OTP, Transaction, UserCourseProgress, ProductReview, UserReview, AdvertisementBanner
+from .models import CartData, SubscriptionMoney, User, OfflinePurchase, Course, Module, Assessment, Certification, CertificationQuestion, Category, Product, UserCourseProgress, UserAssessmentScore, UserCertificationScore, ProductReview, UserReview, Deleteaccount, OTP, Transaction, UserCourseProgress, ProductReview, UserReview, AdvertisementBanner, ActivityFile
 from django.core.files.storage import default_storage
 
 from rest_framework import serializers
@@ -282,4 +282,9 @@ class cartserial(serializers.ModelSerializer):
 class Adserial(serializers.ModelSerializer):
     class Meta:
         model = AdvertisementBanner
+        fields = '__all__'
+
+class ActivitiesSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = ActivityFile
         fields = '__all__'
