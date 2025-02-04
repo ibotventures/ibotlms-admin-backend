@@ -2803,16 +2803,6 @@ class UserReviews(APIView):
         except Exception as e:
             print("Exception:", str(e))  
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
-# class delcoursereview(APIView):
-#     def delete(self, request, id):
-#         try:
-#             reviewdel = UserReview.objects.get(id=id) 
-#             reviewdel.delete()
-#             return Response({"data": 'success','message': 'deleted successfully'}, status=status.HTTP_200_OK)
-#         except Exception as e:
-#             print(f"Error during deletion: {str(e)}")
-#             return Response({'error': f'Something went wrong: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
 class delcoursereview(APIView):
     def delete(self, request, id):
