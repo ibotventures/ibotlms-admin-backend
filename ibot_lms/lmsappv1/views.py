@@ -2335,7 +2335,16 @@ class delproductreview(APIView):
     def delete(self, request, id):
         try:
             productreviewdel = ProductReview.objects.get(id=id) 
+            productid = productreviewdel.product
             productreviewdel.delete()
+            remaining_reviews = ProductReview.objects.filter(product=productid)
+            if remaining_reviews.exists():
+                rating_sum = sum(review.rating for review in remaining_reviews)
+                rating_avg = rating_sum / remaining_reviews.count()
+            else:
+                rating_avg = 0  
+            productid.rating = rating_avg
+            productid.save()
             return Response({"data": 'success','message': 'deleted successfully'}, status=status.HTTP_200_OK)
         except Exception as e:
             print(f"Error during deletion: {str(e)}")
@@ -2795,15 +2804,48 @@ class UserReviews(APIView):
             print("Exception:", str(e))  
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
+# class delcoursereview(APIView):
+#     def delete(self, request, id):
+#         try:
+#             reviewdel = UserReview.objects.get(id=id) 
+#             reviewdel.delete()
+#             return Response({"data": 'success','message': 'deleted successfully'}, status=status.HTTP_200_OK)
+#         except Exception as e:
+#             print(f"Error during deletion: {str(e)}")
+#             return Response({'error': f'Something went wrong: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
 class delcoursereview(APIView):
     def delete(self, request, id):
         try:
-            reviewdel = UserReview.objects.get(id=id) 
-            reviewdel.delete()
-            return Response({"data": 'success','message': 'deleted successfully'}, status=status.HTTP_200_OK)
+            review_to_delete = UserReview.objects.get(id=id)
+            course = review_to_delete.course
+
+            # Delete the review
+            review_to_delete.delete()
+
+            # Calculate the new average rating
+            remaining_reviews = UserReview.objects.filter(course=course)
+            if remaining_reviews.exists():
+                rating_sum = sum(review.rating for review in remaining_reviews)
+                rating_avg = rating_sum / remaining_reviews.count()
+            else:
+                rating_avg = 0  # Default rating if no reviews remain
+
+            # Update the course rating
+            course.rating = rating_avg
+            course.save()
+
+            return Response({"data": 'success', "message": "Deleted successfully"}, status=status.HTTP_200_OK)
+        
+        except UserReview.DoesNotExist:
+            return Response({"error": "Review not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        except Course.DoesNotExist:
+            return Response({"error": "Course not found"}, status=status.HTTP_404_NOT_FOUND)
+
         except Exception as e:
             print(f"Error during deletion: {str(e)}")
-            return Response({'error': f'Something went wrong: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": f"Something went wrong: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
         
 class OrderAPIView(APIView):
     def post(self, request):
