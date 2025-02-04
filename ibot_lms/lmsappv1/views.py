@@ -2843,9 +2843,10 @@ class CheckoutAPIView(APIView):
                 # Save the serialized data
                 serializedTransaction.save()
                 usersub = User.objects.filter(id=user_id).first()
-                usersub.subscription = True
-                usersub.role = 'CourseSubscribedUser'
-                usersub.save()
+                if(usersub.role == 'visitor'):
+                    usersub.subscription = True
+                    usersub.role = 'CourseSubscribedUser'
+                    usersub.save()
                 print(serializedTransaction.data)
                 return Response({'data': serializedTransaction.data}, status=status.HTTP_200_OK)
             else:
