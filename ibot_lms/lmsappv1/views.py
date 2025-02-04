@@ -2385,9 +2385,10 @@ class cartproduct(APIView):
             cart_data = CartData.objects.filter(user=user_id,product=proid, transact=None).first()
             if cart_data:
                 product = Product.objects.filter(id=cart_data.product.id).first()
-                cart_data.quantity += 1
-                cart_data.amount = cart_data.quantity * product.price
-                cart_data.save()
+                if(product.stocks > cart_data.quantity):
+                    cart_data.quantity += 1
+                    cart_data.amount = cart_data.quantity * product.price
+                    cart_data.save()
                 return Response({'data': 'success'}, status=status.HTTP_200_OK)
             else:
                 serializer = cartserialiser(data=data)
