@@ -1099,144 +1099,6 @@ class canviewmodule(APIView):
             print(f"Error: {str(e)}")
             return Response({'error': 'Something went wrong', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-# class tasktrack(APIView):
-#     def post(self,request):
-#         try:
-#             data = request.data
-#             userid = data.get('userid')
-#             courseid = data.get('courseIds')
-#             modid = data.get('moduleid')
-#             tasks = data.get('task')
-#             # image = data.get('image')
-#             # Check if UserCourseProgress already exists
-#             isfound = UserCourseProgress.objects.filter(user=userid, course=courseid).first()
-#             if(modid):
-#                 # Retrieve the Module instance for last_module
-#                 module_instance = get_object_or_404(Module, id=modid)
-#                 insideassessment = UserAssessmentScore.objects.filter(module=modid)
-#                 if isfound:
-#                     # Update the existing instance
-#                     if(isfound.last_module != module_instance):
-#                         isfound.last_module = module_instance
-#                         isfound.content = 0
-#                         isfound.activity = 0
-#                     isfound.task = tasks
-#                     if(insideassessment):
-#                         isfound.content = 1
-#                         isfound.activity = 1
-#                     else:
-#                         if(tasks == 'main'):
-#                             isfound.content = 1
-#                         elif(tasks == 'activity'):
-#                             if(isfound.content == 1):
-#                                 isfound.activity = 1
-#                     isfound.updated_at = timezone.now()
-#                     isfound.save()
-#                     data = {'main':isfound.content,'activity':isfound.activity}
-#                     return Response({'data': data}, status=status.HTTP_200_OK)
-#                 else:
-#                     # If not found, create a new UserCourseProgress record
-#                     data = {'user': userid, 'course': courseid, 'last_module': module_instance.id, 'task': tasks}
-#                     track = TasktrackSerializer(data=data)
-#                     if track.is_valid():
-#                         track.save()
-#                         return Response({'data': 'progress created'}, status=status.HTTP_201_CREATED)
-#                     else:
-#                         print(track.errors)
-#                         return Response(track.errors, status=status.HTTP_400_BAD_REQUEST)
-#             else:
-#                 if isfound:
-#                      # Update the existing instance
-#                     isfound.last_module = None
-#                     isfound.task = tasks
-#                     isfound.updated_at = timezone.now()
-#                     isfound.save()
-#                     return Response({'data': 'progress updated'}, status=status.HTTP_200_OK)
-#                 else:
-#                     # If not found, create a new UserCourseProgress record
-#                     data = {'user': userid, 'course': courseid, 'last_module': None, 'task': tasks}
-#                     track = TasktrackSerializer(data=data)
-#                     if track.is_valid():
-#                         track.save()
-#                         return Response({'data': 'progress created'}, status=status.HTTP_201_CREATED)
-#                     else:
-#                         print(track.errors)
-#                         return Response(track.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#         except Exception as e:
-#             print(f"Error: {str(e)}")
-#             return Response({'error': 'Something went wrong', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
-#     def get(self, request, *args, **kwargs):
-#         try:
-#             user_id = request.query_params.get('userid')
-#             course_id = request.query_params.get('courseid')
-#             progress = UserCourseProgress.objects.filter(user=user_id, course=course_id).first()
-#             if progress:
-#                 serialized_progress = TasktrackSerializer(progress)
-#                 last_mod_id = serialized_progress.data.get('last_module')
-#                 if last_mod_id:
-
-#                     track = serialized_progress.data.get('task')
-#                     module = Module.objects.get(id=last_mod_id)
-#                     type_intro = os.path.splitext(module.intro.name)[1] if module.intro else None
-#                     type_content = os.path.splitext(module.content.name)[1] if module.content else None
-#                     type_activity = os.path.splitext(module.activity.name)[1] if module.activity else None
-
-#                     # Ensure we return URLs for all file types, including PPT files
-#                     intro_urls = module.intro.url if module.intro else None
-#                     content_urls = module.content.url if module.content else None
-#                     activity_urls = module.activity.url if module.activity else None
-
-#                     if type_intro in ['.ppt', '.pptx']:
-#                         intro_urls = f"https://view.officeapps.live.com/op/embed.aspx?src={module.intro}"
-#                     else:
-#                         intro_urls = module.intro.url if module.intro else None
-
-#                     if type_content in ['.ppt', '.pptx']:
-#                         content_urls = f"https://view.officeapps.live.com/op/embed.aspx?src={module.content}"
-#                     else:
-#                         content_urls = module.content.url if module.content else None
-
-#                     if type_activity in ['.ppt', '.pptx']:
-#                         activity_urls = f"https://view.officeapps.live.com/op/embed.aspx?src={module.activity}"
-#                     else:
-#                         activity_urls = module.activity.url if module.activity else None
-
-#                     module_data = {
-#                         'id': str(module.id),
-#                         'module_name': module.module_name,
-#                         'module_description': module.module_description,
-#                         'intro': intro_urls,
-#                         'type_intro': type_intro,
-#                         'content': content_urls,
-#                         'type_content': type_content,
-#                         'activity': activity_urls,
-#                         'type_activity': type_activity,
-#                         'task': track,
-#                         'assessments': []
-#                     }
-
-#                     assessments = Assessment.objects.filter(module=module.id)
-#                     for assessment in assessments:
-#                         assessment_data = {
-#                             'id': str(assessment.id),
-#                             'question': assessment.question,
-#                             'options': [assessment.option1, assessment.option2, assessment.option3, assessment.option4],
-#                         }
-#                         module_data['assessments'].append(assessment_data)
-
-#                     return Response({'data': module_data}, status=status.HTTP_200_OK)
-                
-#                 else:
-#                     serialized_progress = TasktrackSerializer(progress)
-#                     track = serialized_progress.data.get('task')
-#                     return Response({'data': track}, status=status.HTTP_201_CREATED)
-
-#         except Exception as e:
-#             print(f"Error: {str(e)}")
-#             return Response({'error': 'Something went wrong', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
 class tasktrack(APIView):
     def post(self,request):
         try:
@@ -3054,19 +2916,32 @@ class Certify(APIView):
             # Log and return the error
             print("Exception:", str(e))
             return Response({'error': f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
 class ActivityUploads(APIView):
-    def post(self,request):
+    def post(self, request):
         try:
             data = request.data
-            user = data.get('user')
-            course = data.get('course')
-            module = data.get('module')
-            files = self.request.FILES 
+            user_id = data.get('user')
+            course_id = data.get('course')
+            module_id = data.get('module')
+            files = request.FILES
             useruploads = files.get('userupload')
-            isuserfound = ActivityFile.objects.filter(user=user,course=course,module=module).first()
+
+            # Fetching user, course, and module instances
+            user = User.objects.get(id=user_id)
+            course = Course.objects.get(id=course_id)
+            module = Module.objects.get(id=module_id)
+
+            # Check if record already exists
+            isuserfound = ActivityFile.objects.filter(user=user, course=course, module=module).first()
+
+            # Define upload path
+            upload_folder = 'activityupload/'
+
             if not isuserfound:
-                userupload = default_storage.save(useruploads.name, useruploads)  
+                # Save new file
+                file_path = os.path.join(upload_folder, useruploads.name)
+                userupload = default_storage.save(file_path, useruploads)
                 activity = ActivityFile.objects.create(
                     user=user,
                     course=course,
@@ -3075,13 +2950,19 @@ class ActivityUploads(APIView):
                 )
                 serializer = ActivitiesSerializers(activity)
             else:
-                filedata = isuserfound.userupload
-                default_storage.delete(filedata)
-                useruploading = default_storage.save(useruploads.name, useruploads)  
+                # Delete existing file if present
+                if isuserfound.userupload:
+                    existing_file_path = isuserfound.userupload.path
+                    default_storage.delete(existing_file_path)
+
+                # Save and update new file
+                file_path = os.path.join(upload_folder, useruploads.name)
+                useruploading = default_storage.save(file_path, useruploads)
                 isuserfound.userupload = useruploading
                 isuserfound.save()
-            return Response({'data': 'successfully uploaded'}, status=status.HTTP_201_CREATED)
-            
+
+            return Response({'data': 'Successfully uploaded'}, status=status.HTTP_201_CREATED)
+
         except Exception as e:
             print("Exception:", str(e))
             return Response({'error': f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
