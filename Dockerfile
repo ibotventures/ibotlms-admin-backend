@@ -20,6 +20,6 @@ COPY . .
 EXPOSE 8000
 
 # Run the Django development server
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "ibot_lms.ibot_lms.wsgi:application"]
+# CMD ["gunicorn", "--bind", "0.0.0.0:8000", "ibot_lms.ibot_lms.wsgi:application"]
  
-# CMD ["python", "ibot_lms/manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["python", "ibot_lms/manage.py", "runserver", "0.0.0.0:8000"]

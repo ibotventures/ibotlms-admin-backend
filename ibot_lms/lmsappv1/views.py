@@ -6,7 +6,6 @@ from django.db.models import Count, Sum, Avg
 from .filters import CourseFilter,ProductFilter
 from .models import CartData, SubscriptionMoney, User, OfflinePurchase, Module, Course, Assessment, Certification, CertificationQuestion, Category, Product, UserCourseProgress, UserAssessmentScore, UserCertificationScore, ProductReview, UserReview, Deleteaccount, OTP, Transaction, UserCourseProgress, ProductReview, UserReview,AdvertisementBanner, ActivityFile
 from .serializers import (
-
     CourseCreateSerializer,
     CourseFilterSerializer,
     CourseSerializer,
