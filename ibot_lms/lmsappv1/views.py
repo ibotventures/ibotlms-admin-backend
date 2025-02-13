@@ -1122,7 +1122,7 @@ class tasktrack(APIView):
                     if(tasks == 'assessment'):
                         isuserfound = ActivityFile.objects.filter(user=userid,course=courseid,module=modid).first()
                         if isuserfound:
-                            isuserfound.task = tasks
+                            isfound.task = tasks
                     else:
                         isfound.task = tasks
                     if(insideassessment):
