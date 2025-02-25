@@ -811,13 +811,11 @@ class Forget(APIView):
 
                     Your OTP is: {otp}
 
-                    If you did not request a password reset, please ignore this email and your password will remain unchanged.
-
-                    Thank you for using our services!  
+                    Thank you
                     If you have any questions, feel free to reach out to us at info@mi-bot.com.
 
                     Best regards,  
-                    The MiBOT Ventures Team
+                    MiBOT Ventures
                     """,
                     os.getenv('EMAIL_HOST_USER'),
                     [email],
@@ -2329,6 +2327,31 @@ class ProductReviews(APIView):
         except Exception as e:
             print("Exception:", str(e))  
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+    def put(self, request, *args, **kwargs):
+        data = request.data
+        id = data.get('ids')
+        rating = data.get('rating')
+        comment = data.get('comment')
+
+        try:
+            product_review = ProductReview.objects.get(id=id)
+            product_review.rating = rating
+            product_review.review = comment
+            product_review.save()
+            proid = product_review.product
+            edited_review = ProductReview.objects.filter(product=proid)
+            if edited_review.exists():
+                rating_sum = sum(review.rating for review in edited_review)
+                rating_avg = rating_sum / edited_review.count()
+            else:
+                rating_avg = 0
+            proid.rating = rating_avg
+            proid.save()
+            return Response({'data': 'success'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print("Exception:", str(e))  
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class delproductreview(APIView):
     def delete(self, request, id):
@@ -2594,13 +2617,11 @@ class SendOTP(APIView):
 
                     Your OTP is: {otp}
 
-                    If you did not request this, please ignore this email.
-
                     Thank you for being a part of our community!  
                     If you have any questions, feel free to reach out to us at info@mi-bot.com.
 
                     Best regards,  
-                    The MiBOT Ventures Team
+                    MiBOT Ventures
                     """,
                     os.getenv('EMAIL_HOST_USER'),
                     [email],
@@ -2616,13 +2637,11 @@ class SendOTP(APIView):
 
                     Your OTP is: {otp}
 
-                    If you did not request this, please ignore this email.
-
-                    Thank you for being a valued user!  
+                    Thank you
                     If you have any questions, feel free to reach out to us at info@mi-bot.com.
 
                     Best regards,  
-                    The MiBOT Ventures Team
+                    MiBOT Ventures
                     """,
                     os.getenv('EMAIL_HOST_USER'),
                     [email],
@@ -2714,13 +2733,11 @@ class Forget(APIView):
 
                     Your OTP is: {otp}
 
-                    If you did not request a password reset, please ignore this email and your password will remain unchanged.
-
-                    Thank you for using our services!  
+                    Thank you
                     If you have any questions, feel free to reach out to us at info@mi-bot.com.
 
                     Best regards,  
-                    The MiBOT Ventures Team
+                    MiBOT Ventures
                     """,
                     os.getenv('EMAIL_HOST_USER'),
                     [email],
@@ -2799,6 +2816,31 @@ class UserReviews(APIView):
 
             return Response({'data': reviews_list}, status=status.HTTP_200_OK)
 
+        except Exception as e:
+            print("Exception:", str(e))  
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+    def put(self, request, *args, **kwargs):
+        data = request.data
+        id = data.get('ids')
+        rating = data.get('rating')
+        comment = data.get('comment')
+
+        try:
+            course_review = UserReview.objects.get(id=id)
+            course_review.rating = rating
+            course_review.review = comment
+            course_review.save()
+            courseid = course_review.course
+            edited_review = UserReview.objects.filter(course=courseid)
+            if edited_review.exists():
+                rating_sum = sum(review.rating for review in edited_review)
+                rating_avg = rating_sum / edited_review.count()
+            else:
+                rating_avg = 0
+            courseid.rating = rating_avg
+            courseid.save()
+            return Response({'data': 'success'}, status=status.HTTP_200_OK)
         except Exception as e:
             print("Exception:", str(e))  
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
